@@ -22,9 +22,9 @@ public class ReservationEntity extends BaseEntity {
 
     private String description;
 
-    private LocalDateTime creation;
+    private LocalDateTime createdAt;
 
-    private LocalDateTime pickUp;
+    private LocalDateTime pickupAt;
 
     private BigDecimal total;
 

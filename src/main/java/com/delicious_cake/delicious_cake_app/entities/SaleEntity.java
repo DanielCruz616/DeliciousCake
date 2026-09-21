@@ -11,8 +11,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
+@Getter 
+@Setter 
 @Table(name = "sales")
 public class SaleEntity extends BaseEntity {
 
@@ -24,7 +28,7 @@ public class SaleEntity extends BaseEntity {
     @JoinColumn(name = "table_id")
     private StandEntity table;
 
-    private LocalDateTime date;
+    private LocalDateTime createdAt;
 
     private BigDecimal total;
 
