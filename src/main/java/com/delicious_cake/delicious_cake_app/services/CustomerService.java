@@ -25,6 +25,9 @@ public class CustomerService {
         if (customerEntity.getEmail() == null || customerEntity.getEmail().isEmpty()) {
             throw new IllegalArgumentException("Customer email cannot be null or empty");
         }
+        if (customerEntity.getLastName() == null || customerEntity.getLastName().isEmpty()) {
+            throw new IllegalArgumentException("Customer last name cannot be null or empty");
+        }
         if (customerEntity.getCc() == null || customerEntity.getCc() <= 0) {
             throw new IllegalArgumentException("Customer cc cannot be null or invalid");
         }
