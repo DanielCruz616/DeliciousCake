@@ -2,6 +2,7 @@ package com.delicious_cake.delicious_cake_app.entities;
 
 import java.math.BigDecimal;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -23,9 +24,12 @@ public class SaleDetailEntity extends BaseEntity {
     @JoinColumn(name = "product_id", nullable = false)
     private ProductEntity product;
 
+    @Column(nullable = false)
     private Integer quantity;
 
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
 }

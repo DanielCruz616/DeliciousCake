@@ -28,7 +28,9 @@ public class InventoryMovementEntity extends BaseEntity {
     @Column(nullable = false)
     private MovementType type;
 
+    @Column(nullable = false)
     private Integer quantity;
 
+    @Column(nullable = false)
     private LocalDateTime date;
 }

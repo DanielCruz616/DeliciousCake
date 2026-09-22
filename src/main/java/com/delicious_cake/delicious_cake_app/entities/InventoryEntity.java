@@ -1,5 +1,6 @@
 package com.delicious_cake.delicious_cake_app.entities;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -18,5 +19,6 @@ public class InventoryEntity extends BaseEntity {
     @JoinColumn(name = "product_id", nullable = false, unique = true)
     private ProductEntity product;
 
+    @Column(nullable = false)
     private Integer quantity;
 }

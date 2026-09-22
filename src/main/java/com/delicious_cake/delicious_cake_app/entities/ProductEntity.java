@@ -1,8 +1,10 @@
 package com.delicious_cake.delicious_cake_app.entities;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -18,10 +20,13 @@ import lombok.Setter;
 @Table(name = "products")
 public class ProductEntity extends BaseEntity {
 
+    @Column(nullable = false)
     private String name;
 
-    private Integer price;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
 
+    @Column(length = 500)
     private String description;
 
     @ManyToOne

@@ -16,13 +16,14 @@ import lombok.Setter;
 @Table(name = "customers")
 public class CustomerEntity extends BaseEntity {
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private Integer cc;
 
     private String name;
 
     private String lastName;
 
+    @Column (nullable = false, unique = true)
     private String email;
 
     @OneToMany(mappedBy = "customer")

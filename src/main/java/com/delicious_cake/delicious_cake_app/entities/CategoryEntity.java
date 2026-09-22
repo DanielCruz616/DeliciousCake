@@ -1,5 +1,6 @@
 package com.delicious_cake.delicious_cake_app.entities;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -15,6 +16,7 @@ import java.util.List;
 @Table(name = "categories")
 public class CategoryEntity extends BaseEntity {
 
+    @Column(nullable = false, unique = true)
     private String name;
 
     private String description;
