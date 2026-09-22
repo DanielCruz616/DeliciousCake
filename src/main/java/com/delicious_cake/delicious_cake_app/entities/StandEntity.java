@@ -16,8 +16,8 @@ import lombok.Setter;
 public class StandEntity extends BaseEntity {
 
     private Integer capacity;
-
     private Integer number;
+    private Boolean isAvailable;
 
     @OneToMany(mappedBy = "table")
     private List<SaleEntity> sales = new ArrayList<>();
