@@ -3,9 +3,12 @@ package com.delicious_cake.delicious_cake_app.services;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import com.delicious_cake.delicious_cake_app.entities.SaleEntity;
 import com.delicious_cake.delicious_cake_app.repositories.SaleRepository;
 
+@Service
 public class SaleService {
 
     private final SaleRepository saleRepository;
