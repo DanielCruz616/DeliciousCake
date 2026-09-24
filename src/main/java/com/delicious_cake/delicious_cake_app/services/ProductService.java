@@ -2,75 +2,121 @@ package com.delicious_cake.delicious_cake_app.services;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.delicious_cake.delicious_cake_app.dtos.ProductDTO;
+import com.delicious_cake.delicious_cake_app.entities.CategoryEntity;
 import com.delicious_cake.delicious_cake_app.entities.ProductEntity;
+import com.delicious_cake.delicious_cake_app.mappers.ProductMapper;
+import com.delicious_cake.delicious_cake_app.repositories.CategoryRepository;
 import com.delicious_cake.delicious_cake_app.repositories.ProductRepository;
 
 @Service
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
 
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(
+            ProductRepository productRepository,
+            CategoryRepository categoryRepository) {
+
         this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     //Create Method
-    public ProductEntity createProduct(ProductEntity product) {
-        if (product.getName() == null || product.getName().isEmpty()) {
-            throw new IllegalArgumentException("Product name cannot be null or empty");
-        }
-        if (product.getPrice() == null || product.getPrice().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Product price cannot be null or negative");
-        }
-        if (product.getCategory() == null) {
-            throw new IllegalArgumentException("Product category cannot be null");
-        }
-        return productRepository.save(product);
+    public ProductDTO create(ProductDTO dto) {
+
+        validateProduct(dto);
+
+        ProductEntity product = ProductMapper.toEntity(dto);
+        
+        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Category not found with id: " + dto.getCategoryId()));
+
+        product.setCategory(category);
+
+        ProductEntity savedProduct = productRepository.save(product);
+
+        return ProductMapper.toDTO(savedProduct);
     }
 
     //Get Method
-    public ProductEntity getProductById(Long id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + id));
+    public ProductDTO getById(Long id) {
+
+        ProductEntity product = productRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Product not found with id: " + id));
+
+        return ProductMapper.toDTO(product);
     }
 
     //Get All Method
-    public List<ProductEntity> getAllProducts() {
-        return productRepository.findAll();
+    public List<ProductDTO> getAll() {
+
+        return productRepository.findAll()
+                .stream()
+                .map(ProductMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     //Update Method
-    public ProductEntity updateProduct(Long id, ProductEntity product) {
-        ProductEntity existingProduct = getProductById(id);
+    public ProductDTO update(Long id, ProductDTO dto) {
 
-        if (product.getName() == null || product.getName().isEmpty()) {
-            throw new IllegalArgumentException("Product name cannot be null or empty");
-        }
-        if (product.getPrice() == null || product.getPrice().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Product price cannot be null or negative");
-        }
-        if (product.getCategory() == null) {
-            throw new IllegalArgumentException("Product category cannot be null");
-        }
+        ProductEntity existingProduct = productRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Product not found with id: " + id));
 
-        existingProduct.setName(product.getName());
-        existingProduct.setPrice(product.getPrice());
-        existingProduct.setDescription(product.getDescription());
-        existingProduct.setCategory(product.getCategory());
+        validateProduct(dto);
 
-        return productRepository.save(existingProduct);
+        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Category not found with id: " + dto.getCategoryId()));
+
+        existingProduct.setName(dto.getName());
+        existingProduct.setPrice(dto.getPrice());
+        existingProduct.setDescription(dto.getDescription());
+        existingProduct.setCategory(category);
+
+        ProductEntity updatedProduct = productRepository.save(existingProduct);
+
+        return ProductMapper.toDTO(updatedProduct);
     }
 
     //Delete Method
-    public void deleteProduct(Long id) {
-        try {
-            ProductEntity existingProduct = getProductById(id);
-            productRepository.delete(existingProduct);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Product not found with id: " + id);
+    public void delete(Long id) {
+
+        ProductEntity product = productRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Product not found with id: " + id));
+
+        productRepository.delete(product);
+    }
+
+    //Validation Method
+    private void validateProduct(ProductDTO dto) {
+
+        if (dto.getName() == null || dto.getName().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Product name cannot be null or empty");
+        }
+
+        if (dto.getPrice() == null ||
+                dto.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+
+            throw new IllegalArgumentException(
+                    "Product price cannot be null or negative");
+        }
+
+        if (dto.getCategoryId() == null) {
+            throw new IllegalArgumentException(
+                    "Product category ID cannot be null");
         }
     }
 }

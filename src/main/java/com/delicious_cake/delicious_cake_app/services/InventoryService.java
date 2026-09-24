@@ -1,66 +1,116 @@
 package com.delicious_cake.delicious_cake_app.services;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.delicious_cake.delicious_cake_app.dtos.InventoryDTO;
 import com.delicious_cake.delicious_cake_app.entities.InventoryEntity;
+import com.delicious_cake.delicious_cake_app.entities.ProductEntity;
+import com.delicious_cake.delicious_cake_app.mappers.InventoryMapper;
 import com.delicious_cake.delicious_cake_app.repositories.InventoryRepository;
+import com.delicious_cake.delicious_cake_app.repositories.ProductRepository;
 
-@Service 
+@Service
 public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
+    private final ProductRepository productRepository;
 
-    public InventoryService(InventoryRepository inventoryRepository){
+    public InventoryService(
+            InventoryRepository inventoryRepository,
+            ProductRepository productRepository) {
+
         this.inventoryRepository = inventoryRepository;
+        this.productRepository = productRepository;
     }
 
     //Create Method
-    public InventoryEntity create(InventoryEntity inventoryEntity) {
-        if (inventoryEntity.getProduct() == null) {
-            throw new IllegalArgumentException("Product cannot be null");
-        }
-        if (inventoryEntity.getQuantity() == null || inventoryEntity.getQuantity() < 0) {
-            throw new IllegalArgumentException("Quantity cannot be null or negative");
-        }
-        return inventoryRepository.save(inventoryEntity);
+    public InventoryDTO create(InventoryDTO dto) {
+
+        validateInventory(dto);
+
+        InventoryEntity inventory = InventoryMapper.toEntity(dto);
+
+        ProductEntity product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Product not found with id: " + dto.getProductId()));
+
+        inventory.setProduct(product);
+
+        InventoryEntity savedInventory = inventoryRepository.save(inventory);
+
+        return InventoryMapper.toDTO(savedInventory);
     }
-    
+
     //Get Method
-    public InventoryEntity getById(Long id) {
-        return inventoryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Inventory not found with id: " + id));
+    public InventoryDTO getById(Long id) {
+
+        InventoryEntity inventory = inventoryRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Inventory not found with id: " + id));
+
+        return InventoryMapper.toDTO(inventory);
     }
-    
+
     //Get All Method
-    public List<InventoryEntity> getAll() {
-        return inventoryRepository.findAll();
+    public List<InventoryDTO> getAll() {
+
+        return inventoryRepository.findAll()
+                .stream()
+                .map(InventoryMapper::toDTO)
+                .collect(Collectors.toList());
     }
-    
+
     //Update Method
-    public InventoryEntity update(Long id, InventoryEntity inventoryEntity) {
-        InventoryEntity existingInventory = getById(id);
+    public InventoryDTO update(Long id, InventoryDTO dto) {
 
-        if (inventoryEntity.getProduct() == null) {
-            throw new IllegalArgumentException("Product cannot be null");
-        }
-        if (inventoryEntity.getQuantity() == null || inventoryEntity.getQuantity() < 0) {
-            throw new IllegalArgumentException("Quantity cannot be null or negative");
-        }
+        InventoryEntity existingInventory = inventoryRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Inventory not found with id: " + id));
 
-        existingInventory.setProduct(inventoryEntity.getProduct());
-        existingInventory.setQuantity(inventoryEntity.getQuantity());
-        return inventoryRepository.save(existingInventory);
+        validateInventory(dto);
+
+        ProductEntity product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Product not found with id: " + dto.getProductId()));
+
+        existingInventory.setProduct(product);
+        existingInventory.setQuantity(dto.getQuantity());
+
+        InventoryEntity updatedInventory =
+                inventoryRepository.save(existingInventory);
+
+        return InventoryMapper.toDTO(updatedInventory);
     }
 
     //Delete Method
     public void delete(Long id) {
-        try {
-            InventoryEntity existingInventory = getById(id);
-            inventoryRepository.delete(existingInventory);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Inventory not found with id: " + id);
+
+        InventoryEntity inventory = inventoryRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Inventory not found with id: " + id));
+
+        inventoryRepository.delete(inventory);
+    }
+
+    //Validation Method
+    private void validateInventory(InventoryDTO dto) {
+
+        if (dto.getProductId() == null) {
+            throw new IllegalArgumentException(
+                    "Product ID cannot be null");
+        }
+
+        if (dto.getQuantity() == null || dto.getQuantity() < 0) {
+            throw new IllegalArgumentException(
+                    "Quantity cannot be null or negative");
         }
     }
-}   
+}

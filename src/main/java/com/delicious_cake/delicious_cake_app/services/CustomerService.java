@@ -1,78 +1,100 @@
 package com.delicious_cake.delicious_cake_app.services;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.delicious_cake.delicious_cake_app.dtos.CustomerDTO;
 import com.delicious_cake.delicious_cake_app.entities.CustomerEntity;
+import com.delicious_cake.delicious_cake_app.mappers.CustomerMapper;
 import com.delicious_cake.delicious_cake_app.repositories.CustomerRepository;
 
-@Service 
+@Service
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
-    
+
     public CustomerService(CustomerRepository customerRepository) {
         this.customerRepository = customerRepository;
     }
 
     //Create Method
-    public CustomerEntity create(CustomerEntity customerEntity) {
+    public CustomerDTO create(CustomerDTO dto) {
 
-        if (customerEntity.getName() == null || customerEntity.getName().isEmpty()) {
-            throw new IllegalArgumentException("Customer name cannot be null or empty");
-        }
-        if (customerEntity.getEmail() == null || customerEntity.getEmail().isEmpty()) {
-            throw new IllegalArgumentException("Customer email cannot be null or empty");
-        }
-        if (customerEntity.getLastName() == null || customerEntity.getLastName().isEmpty()) {
-            throw new IllegalArgumentException("Customer last name cannot be null or empty");
-        }
-        if (customerEntity.getCc() == null || customerEntity.getCc() <= 0) {
-            throw new IllegalArgumentException("Customer cc cannot be null or invalid");
-        }
-        return customerRepository.save(customerEntity);
+        validateCustomer(dto);
+
+        CustomerEntity customer = CustomerMapper.toEntity(dto);
+        CustomerEntity savedCustomer = customerRepository.save(customer);
+
+        return CustomerMapper.toDTO(savedCustomer);
     }
 
     //Get Method
-    public CustomerEntity getById(Long id) {
-        return customerRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found with id: " + id));
+    public CustomerDTO getById(Long id) {
+
+        CustomerEntity customer = customerRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Customer not found with id: " + id));
+
+        return CustomerMapper.toDTO(customer);
     }
 
     //Get All Method
-    public List<CustomerEntity> getAll() {
-        return customerRepository.findAll();
+    public List<CustomerDTO> getAll() {
+
+        return customerRepository.findAll()
+                .stream()
+                .map(CustomerMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     //Update Method
-    public CustomerEntity update(Long id, CustomerEntity customerEntity) {
-        CustomerEntity existingCustomer = getById(id);
+    public CustomerDTO update(Long id, CustomerDTO dto) {
 
-        if (customerEntity.getName() == null || customerEntity.getName().isEmpty()) {
-            throw new IllegalArgumentException("Customer name cannot be null or empty");
-        }
-        if (customerEntity.getEmail() == null || customerEntity.getEmail().isEmpty()) {
-            throw new IllegalArgumentException("Customer email cannot be null or empty");
-        }
-        if (customerEntity.getCc() == null || customerEntity.getCc() <= 0) {
-            throw new IllegalArgumentException("Customer cc cannot be null or invalid");
-        }
+        CustomerEntity existingCustomer = customerRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Customer not found with id: " + id));
 
-        existingCustomer.setName(customerEntity.getName());
-        existingCustomer.setEmail(customerEntity.getEmail());
-        existingCustomer.setCc(customerEntity.getCc());
-        existingCustomer.setLastName(customerEntity.getLastName());
-        return customerRepository.save(existingCustomer);
+        validateCustomer(dto);
+
+        existingCustomer.setName(dto.getName());
+        existingCustomer.setEmail(dto.getEmail());
+        existingCustomer.setCc(dto.getCc());
+        existingCustomer.setLastName(dto.getLastName());
+
+        CustomerEntity updatedCustomer = customerRepository.save(existingCustomer);
+
+        return CustomerMapper.toDTO(updatedCustomer);
     }
 
     //Delete Method
     public void delete(Long id) {
-        try {
-            CustomerEntity existingCustomer = getById(id);
-            customerRepository.delete(existingCustomer);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Customer not found with id: " + id);
+
+        CustomerEntity customer = customerRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Customer not found with id: " + id));
+
+        customerRepository.delete(customer);
+    }
+
+    //Validation Method
+    private void validateCustomer(CustomerDTO dto) {
+
+        if (dto.getName() == null || dto.getName().isEmpty()) {
+            throw new IllegalArgumentException("Customer name cannot be null or empty");
+        }
+
+        if (dto.getEmail() == null || dto.getEmail().isEmpty()) {
+            throw new IllegalArgumentException("Customer email cannot be null or empty");
+        }
+
+        if (dto.getLastName() == null || dto.getLastName().isEmpty()) {
+            throw new IllegalArgumentException("Customer last name cannot be null or empty");
+        }
+
+        if (dto.getCc() == null || dto.getCc() <= 0) {
+            throw new IllegalArgumentException("Customer cc cannot be null or invalid");
         }
     }
 }

@@ -1,81 +1,135 @@
 package com.delicious_cake.delicious_cake_app.services;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.delicious_cake.delicious_cake_app.dtos.InventoryMovementDTO;
 import com.delicious_cake.delicious_cake_app.entities.InventoryMovementEntity;
+import com.delicious_cake.delicious_cake_app.entities.ProductEntity;
+import com.delicious_cake.delicious_cake_app.mappers.InventoryMovementMapper;
 import com.delicious_cake.delicious_cake_app.repositories.InventoryMovementRepository;
+import com.delicious_cake.delicious_cake_app.repositories.ProductRepository;
 
-@Service 
+@Service
 public class InventoryMovementService {
 
     private final InventoryMovementRepository inventoryMovementRepository;
+    private final ProductRepository productRepository;
 
-    public InventoryMovementService(InventoryMovementRepository inventoryMovementRepository) {
+    public InventoryMovementService(
+            InventoryMovementRepository inventoryMovementRepository,
+            ProductRepository productRepository) {
+
         this.inventoryMovementRepository = inventoryMovementRepository;
+        this.productRepository = productRepository;
     }
 
     //Create Method
-    public InventoryMovementEntity create(InventoryMovementEntity inventoryMovementEntity) {
-        if (inventoryMovementEntity.getProduct() == null) {
-            throw new IllegalArgumentException("Product cannot be null");
-        }
-        if (inventoryMovementEntity.getType() == null) {
-            throw new IllegalArgumentException("Movement type cannot be null");
-        }
-        if (inventoryMovementEntity.getQuantity() == null || inventoryMovementEntity.getQuantity() < 0) {
-            throw new IllegalArgumentException("Quantity cannot be null or negative");
-        }
-        if (inventoryMovementEntity.getDate() == null) {
-            throw new IllegalArgumentException("Date cannot be null");
-        }
-        return inventoryMovementRepository.save(inventoryMovementEntity);
+    public InventoryMovementDTO create(InventoryMovementDTO dto) {
+
+        validateMovement(dto);
+
+        InventoryMovementEntity movement =
+                InventoryMovementMapper.toEntity(dto);
+
+        ProductEntity product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Product not found with id: " + dto.getProductId()));
+
+        movement.setProduct(product);
+
+        InventoryMovementEntity savedMovement =
+                inventoryMovementRepository.save(movement);
+
+        return InventoryMovementMapper.toDTO(savedMovement);
     }
 
     //Get Method
-    public InventoryMovementEntity getById(Long id) {
-        return inventoryMovementRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Inventory movement not found with id: " + id));
+    public InventoryMovementDTO getById(Long id) {
+
+        InventoryMovementEntity movement =
+                inventoryMovementRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Inventory movement not found with id: " + id));
+
+        return InventoryMovementMapper.toDTO(movement);
     }
 
     //Get All Method
-    public List<InventoryMovementEntity> getAll() {
-        return inventoryMovementRepository.findAll();
+    public List<InventoryMovementDTO> getAll() {
+
+        return inventoryMovementRepository.findAll()
+                .stream()
+                .map(InventoryMovementMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     //Update Method
-    public InventoryMovementEntity update(Long id, InventoryMovementEntity inventoryMovementEntity) {
-        InventoryMovementEntity existingInventoryMovement = getById(id);
+    public InventoryMovementDTO update(
+            Long id,
+            InventoryMovementDTO dto) {
 
-        if (inventoryMovementEntity.getProduct() == null) {
-            throw new IllegalArgumentException("Product cannot be null");
-        }
-        if (inventoryMovementEntity.getType() == null) {
-            throw new IllegalArgumentException("Movement type cannot be null");
-        }
-        if (inventoryMovementEntity.getQuantity() == null || inventoryMovementEntity.getQuantity() < 0) {
-            throw new IllegalArgumentException("Quantity cannot be null or negative");
-        }
-        if (inventoryMovementEntity.getDate() == null) {
-            throw new IllegalArgumentException("Date cannot be null");
-        }
+        InventoryMovementEntity existingMovement =
+                inventoryMovementRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Inventory movement not found with id: " + id));
 
-        existingInventoryMovement.setProduct(inventoryMovementEntity.getProduct());
-        existingInventoryMovement.setType(inventoryMovementEntity.getType());
-        existingInventoryMovement.setQuantity(inventoryMovementEntity.getQuantity());
-        existingInventoryMovement.setDate(inventoryMovementEntity.getDate());
+        validateMovement(dto);
 
-        return inventoryMovementRepository.save(existingInventoryMovement);
+        ProductEntity product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Product not found with id: " + dto.getProductId()));
+
+        existingMovement.setProduct(product);
+        existingMovement.setType(dto.getType());
+        existingMovement.setQuantity(dto.getQuantity());
+        existingMovement.setDate(dto.getDate());
+
+        InventoryMovementEntity updatedMovement =
+                inventoryMovementRepository.save(existingMovement);
+
+        return InventoryMovementMapper.toDTO(updatedMovement);
     }
 
     //Delete Method
     public void delete(Long id) {
-        try {
-            InventoryMovementEntity existingInventoryMovement = getById(id);
-            inventoryMovementRepository.delete(existingInventoryMovement);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Inventory movement not found with id: " + id);
+
+        InventoryMovementEntity movement =
+                inventoryMovementRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Inventory movement not found with id: " + id));
+
+        inventoryMovementRepository.delete(movement);
+    }
+
+    //Validation Method
+    private void validateMovement(InventoryMovementDTO dto) {
+
+        if (dto.getProductId() == null) {
+            throw new IllegalArgumentException(
+                    "Product ID cannot be null");
+        }
+
+        if (dto.getType() == null) {
+            throw new IllegalArgumentException(
+                    "Movement type cannot be null");
+        }
+
+        if (dto.getQuantity() == null || dto.getQuantity() < 0) {
+            throw new IllegalArgumentException(
+                    "Quantity cannot be null or negative");
+        }
+
+        if (dto.getDate() == null) {
+            throw new IllegalArgumentException(
+                    "Date cannot be null");
         }
     }
 }

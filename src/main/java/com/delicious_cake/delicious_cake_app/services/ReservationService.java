@@ -2,89 +2,150 @@ package com.delicious_cake.delicious_cake_app.services;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.delicious_cake.delicious_cake_app.dtos.ReservationDTO;
+import com.delicious_cake.delicious_cake_app.entities.CustomerEntity;
 import com.delicious_cake.delicious_cake_app.entities.ReservationEntity;
+import com.delicious_cake.delicious_cake_app.mappers.ReservationMapper;
+import com.delicious_cake.delicious_cake_app.repositories.CustomerRepository;
 import com.delicious_cake.delicious_cake_app.repositories.ReservationRepository;
 
-@Service 
+@Service
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
+    private final CustomerRepository customerRepository;
 
-    public ReservationService(ReservationRepository reservationRepository) {
+    public ReservationService(
+            ReservationRepository reservationRepository,
+            CustomerRepository customerRepository) {
+
         this.reservationRepository = reservationRepository;
+        this.customerRepository = customerRepository;
     }
 
     //Create Method
-    public ReservationEntity createReservation(ReservationEntity reservation) {
-        if(reservation.getCustomer() == null) {
-            throw new IllegalArgumentException("Customer cannot be null");
-        }
-        if(reservation.getCreatedAt() == null) {
-            throw new IllegalArgumentException("CreatedAt cannot be null");
-        }
-        if(reservation.getPickupAt() == null) {
-            throw new IllegalArgumentException("PickupAt cannot be null");
-        }
-        if(reservation.getTotal() == null || reservation.getTotal().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Total cannot be null or negative");
-        }
-        if(reservation.getPending() == null || reservation.getPending().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Pending cannot be null or negative");
-        }
-        return reservationRepository.save(reservation);
+    public ReservationDTO createReservation(ReservationDTO dto) {
+
+        validateReservation(dto);
+
+        ReservationEntity reservation =
+                ReservationMapper.toEntity(dto);
+
+        CustomerEntity customer =
+                customerRepository.findById(dto.getCustomerId())
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Customer not found with id: "
+                                                + dto.getCustomerId()));
+
+        reservation.setCustomer(customer);
+
+        ReservationEntity savedReservation =
+                reservationRepository.save(reservation);
+
+        return ReservationMapper.toDTO(savedReservation);
     }
 
     //Get Method
-    public ReservationEntity getReservationById(Long id) {
-        return reservationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Reservation not found with id: " + id));
-    }   
+    public ReservationDTO getReservationById(Long id) {
+
+        ReservationEntity reservation =
+                reservationRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Reservation not found with id: " + id));
+
+        return ReservationMapper.toDTO(reservation);
+    }
 
     //Get All Method
-    public List<ReservationEntity> getAllReservations() {
-        return reservationRepository.findAll();
+    public List<ReservationDTO> getAllReservations() {
+
+        return reservationRepository.findAll()
+                .stream()
+                .map(ReservationMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     //Update Method
-    public ReservationEntity updateReservation(Long id, ReservationEntity reservation) {
-        ReservationEntity existingReservation = getReservationById(id);
+    public ReservationDTO updateReservation(
+            Long id,
+            ReservationDTO dto) {
 
-        if(reservation.getCustomer() == null) {
-            throw new IllegalArgumentException("Customer cannot be null");
-        }
-        if(reservation.getCreatedAt() == null) {
-            throw new IllegalArgumentException("CreatedAt cannot be null");
-        }
-        if(reservation.getPickupAt() == null) {
-            throw new IllegalArgumentException("PickupAt cannot be null");
-        }
-        if(reservation.getTotal() == null || reservation.getTotal().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Total cannot be null or negative");
-        }
-        if(reservation.getPending() == null || reservation.getPending().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Pending cannot be null or negative");
-        }
+        ReservationEntity existingReservation =
+                reservationRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Reservation not found with id: " + id));
 
-        existingReservation.setCustomer(reservation.getCustomer());
-        existingReservation.setDescription(reservation.getDescription());
-        existingReservation.setCreatedAt(reservation.getCreatedAt());
-        existingReservation.setPickupAt(reservation.getPickupAt());
-        existingReservation.setTotal(reservation.getTotal());
-        existingReservation.setPending(reservation.getPending());
+        validateReservation(dto);
 
-        return reservationRepository.save(existingReservation);
+        CustomerEntity customer =
+                customerRepository.findById(dto.getCustomerId())
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Customer not found with id: "
+                                                + dto.getCustomerId()));
+
+        existingReservation.setCustomer(customer);
+        existingReservation.setDescription(dto.getDescription());
+        existingReservation.setCreatedAt(dto.getCreatedAt());
+        existingReservation.setPickupAt(dto.getPickupAt());
+        existingReservation.setTotal(dto.getTotal());
+        existingReservation.setPending(dto.getPending());
+
+        ReservationEntity updatedReservation =
+                reservationRepository.save(existingReservation);
+
+        return ReservationMapper.toDTO(updatedReservation);
     }
 
     //Delete Method
     public void deleteReservation(Long id) {
-        try {
-            ReservationEntity existingReservation = getReservationById(id);
-            reservationRepository.delete(existingReservation);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Reservation not found with id: " + id);
+
+        ReservationEntity reservation =
+                reservationRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Reservation not found with id: " + id));
+
+        reservationRepository.delete(reservation);
+    }
+
+    //Validation Method
+    private void validateReservation(ReservationDTO dto) {
+
+        if (dto.getCustomerId() == null) {
+            throw new IllegalArgumentException(
+                    "Customer ID cannot be null");
+        }
+
+        if (dto.getCreatedAt() == null) {
+            throw new IllegalArgumentException(
+                    "CreatedAt cannot be null");
+        }
+
+        if (dto.getPickupAt() == null) {
+            throw new IllegalArgumentException(
+                    "PickupAt cannot be null");
+        }
+
+        if (dto.getTotal() == null ||
+                dto.getTotal().compareTo(BigDecimal.ZERO) < 0) {
+
+            throw new IllegalArgumentException(
+                    "Total cannot be null or negative");
+        }
+
+        if (dto.getPending() == null ||
+                dto.getPending().compareTo(BigDecimal.ZERO) < 0) {
+
+            throw new IllegalArgumentException(
+                    "Pending cannot be null or negative");
         }
     }
 }
