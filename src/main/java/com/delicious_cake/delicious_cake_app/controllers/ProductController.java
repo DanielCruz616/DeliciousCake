@@ -10,7 +10,7 @@ import com.delicious_cake.delicious_cake_app.dtos.ProductDTO;
 import com.delicious_cake.delicious_cake_app.services.ProductService;
 
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/products")
 public class ProductController {
 
     private final ProductService productService;

@@ -1,6 +1,7 @@
 package com.delicious_cake.delicious_cake_app.services;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,6 +44,7 @@ public class ReservationService {
                                                 + dto.getCustomerId()));
 
         reservation.setCustomer(customer);
+        reservation.setCreatedAt(LocalDate.now());
 
         ReservationEntity savedReservation =
                 reservationRepository.save(reservation);
@@ -90,6 +92,10 @@ public class ReservationService {
                                 new IllegalArgumentException(
                                         "Customer not found with id: "
                                                 + dto.getCustomerId()));
+        
+        if (dto.getCreatedAt() == null) {
+            throw new IllegalArgumentException("CreatedAt cannot be null");
+        }
 
         existingReservation.setCustomer(customer);
         existingReservation.setDescription(dto.getDescription());
@@ -122,11 +128,6 @@ public class ReservationService {
         if (dto.getCustomerId() == null) {
             throw new IllegalArgumentException(
                     "Customer ID cannot be null");
-        }
-
-        if (dto.getCreatedAt() == null) {
-            throw new IllegalArgumentException(
-                    "CreatedAt cannot be null");
         }
 
         if (dto.getPickupAt() == null) {

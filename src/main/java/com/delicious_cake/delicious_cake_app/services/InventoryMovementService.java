@@ -1,5 +1,6 @@
 package com.delicious_cake.delicious_cake_app.services;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,7 @@ public class InventoryMovementService {
                                 "Product not found with id: " + dto.getProductId()));
 
         movement.setProduct(product);
+        movement.setDate(LocalDate.now());
 
         InventoryMovementEntity savedMovement =
                 inventoryMovementRepository.save(movement);
@@ -89,7 +91,6 @@ public class InventoryMovementService {
         existingMovement.setProduct(product);
         existingMovement.setType(dto.getType());
         existingMovement.setQuantity(dto.getQuantity());
-        existingMovement.setDate(dto.getDate());
 
         InventoryMovementEntity updatedMovement =
                 inventoryMovementRepository.save(existingMovement);
@@ -125,11 +126,6 @@ public class InventoryMovementService {
         if (dto.getQuantity() == null || dto.getQuantity() < 0) {
             throw new IllegalArgumentException(
                     "Quantity cannot be null or negative");
-        }
-
-        if (dto.getDate() == null) {
-            throw new IllegalArgumentException(
-                    "Date cannot be null");
         }
     }
 }

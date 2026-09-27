@@ -1,6 +1,6 @@
 package com.delicious_cake.delicious_cake_app.dtos;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import com.delicious_cake.delicious_cake_app.enums.MovementType;
 
@@ -15,5 +15,5 @@ public class InventoryMovementDTO {
     private Long productId;
     private MovementType type;
     private Integer quantity;
-    private LocalDateTime date;
+    private LocalDate date;
 }

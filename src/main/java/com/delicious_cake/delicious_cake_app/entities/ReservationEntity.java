@@ -1,7 +1,7 @@
 package com.delicious_cake.delicious_cake_app.entities;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,10 +24,10 @@ public class ReservationEntity extends BaseEntity {
     private String description;
 
     @Column (nullable = false)
-    private LocalDateTime createdAt;
+    private LocalDate createdAt;
 
     @Column (nullable = false)
-    private LocalDateTime pickupAt;
+    private LocalDate pickupAt;
 
     @Column (nullable = false, precision = 10, scale = 2)
     private BigDecimal total;

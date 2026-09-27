@@ -2,7 +2,6 @@ package com.delicious_cake.delicious_cake_app.controllers;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,14 +18,14 @@ public class SaleDetailController {
         this.saleDetailService = saleDetailService;
     }
 
-    @PostMapping
-    public ResponseEntity<SaleDetailDTO> create(
-            @RequestBody SaleDetailDTO saleDetailDTO) {
+    // @PostMapping
+    // public ResponseEntity<SaleDetailDTO> create(
+    //         @RequestBody SaleDetailDTO saleDetailDTO) {
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(saleDetailService.create(saleDetailDTO));
-    }
+    //     return ResponseEntity
+    //             .status(HttpStatus.CREATED)
+    //             .body(saleDetailService.create(saleDetailDTO));
+    // }
 
     @GetMapping("/{id}")
     public ResponseEntity<SaleDetailDTO> getById(@PathVariable Long id) {

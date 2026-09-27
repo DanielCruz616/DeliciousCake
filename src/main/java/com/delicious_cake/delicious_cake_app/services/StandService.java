@@ -25,8 +25,10 @@ public class StandService {
         validateStand(dto);
 
         StandEntity stand = StandMapper.toEntity(dto);
+
+        stand.setIsAvailable(true);
+        stand.setIsAvailable(true);
         StandEntity savedStand = standRepository.save(stand);
-        
         return StandMapper.toDTO(savedStand);
     }
 
@@ -59,6 +61,11 @@ public class StandService {
                                 "Stand not found with id: " + id));
 
         validateStand(dto);
+        
+        if (dto.getIsAvailable() == null) {
+            throw new IllegalArgumentException(
+                    "Stand availability cannot be null");
+        }
 
         existingStand.setNumber(dto.getNumber());
         existingStand.setPersons(dto.getPersons());
@@ -86,11 +93,6 @@ public class StandService {
         if (dto.getNumber() == null) {
             throw new IllegalArgumentException(
                     "Stand number cannot be null");
-        }
-
-        if (dto.getIsAvailable() == null) {
-            throw new IllegalArgumentException(
-                    "Stand availability cannot be null");
         }
     }
 }

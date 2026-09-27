@@ -1,7 +1,7 @@
 package com.delicious_cake.delicious_cake_app.entities;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class SaleEntity extends BaseEntity {
     @JoinColumn(name = "table_id")
     private StandEntity table;
 
-    private LocalDateTime createdAt;
+    private LocalDate createdAt;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal total;

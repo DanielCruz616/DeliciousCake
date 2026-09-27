@@ -37,23 +37,24 @@ public class SaleDetailService {
 
         validateSaleDetail(dto);
 
-        SaleDetailEntity saleDetail =
-                SaleDetailMapper.toEntity(dto);
+        SaleDetailEntity saleDetail = SaleDetailMapper.toEntity(dto);
 
         SaleEntity sale = saleRepository.findById(dto.getSaleId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Sale not found with id: " + dto.getSaleId()));
+                .orElseThrow(() -> new IllegalArgumentException("Sale not found with id: " + dto.getSaleId()));
 
-        ProductEntity product =
-                productRepository.findById(dto.getProductId())
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Product not found with id: "
-                                                + dto.getProductId()));
+        ProductEntity product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + dto.getProductId()));
+
+        BigDecimal unitPrice = product.getPrice();
+
+        BigDecimal subtotal = unitPrice.multiply(
+                BigDecimal.valueOf(dto.getQuantity())
+        );
 
         saleDetail.setSale(sale);
         saleDetail.setProduct(product);
+        saleDetail.setUnitPrice(unitPrice);
+        saleDetail.setSubtotal(subtotal);
 
         SaleDetailEntity savedSaleDetail =
                 saleDetailRepository.save(saleDetail);
@@ -96,22 +97,21 @@ public class SaleDetailService {
         validateSaleDetail(dto);
 
         SaleEntity sale = saleRepository.findById(dto.getSaleId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Sale not found with id: " + dto.getSaleId()));
+                .orElseThrow(() -> new IllegalArgumentException("Sale not found with id: " + dto.getSaleId()));
 
-        ProductEntity product =
-                productRepository.findById(dto.getProductId())
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Product not found with id: "
-                                                + dto.getProductId()));
+        ProductEntity product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + dto.getProductId()));
+         
+        BigDecimal unitPrice = product.getPrice();
 
+        BigDecimal subtotal = unitPrice.multiply(
+                BigDecimal.valueOf(dto.getQuantity())
+        );
         existingSaleDetail.setSale(sale);
         existingSaleDetail.setProduct(product);
         existingSaleDetail.setQuantity(dto.getQuantity());
-        existingSaleDetail.setUnitPrice(dto.getUnitPrice());
-        existingSaleDetail.setSubtotal(dto.getSubtotal());
+        existingSaleDetail.setUnitPrice(unitPrice);
+        existingSaleDetail.setSubtotal(subtotal);
 
         SaleDetailEntity updatedSaleDetail =
                 saleDetailRepository.save(existingSaleDetail);
@@ -147,20 +147,6 @@ public class SaleDetailService {
         if (dto.getQuantity() == null || dto.getQuantity() <= 0) {
             throw new IllegalArgumentException(
                     "Quantity must be greater than zero");
-        }
-
-        if (dto.getUnitPrice() == null ||
-                dto.getUnitPrice().compareTo(BigDecimal.ZERO) < 0) {
-
-            throw new IllegalArgumentException(
-                    "Unit price cannot be null or negative");
-        }
-
-        if (dto.getSubtotal() == null ||
-                dto.getSubtotal().compareTo(BigDecimal.ZERO) < 0) {
-
-            throw new IllegalArgumentException(
-                    "Subtotal cannot be null or negative");
         }
     }
 }

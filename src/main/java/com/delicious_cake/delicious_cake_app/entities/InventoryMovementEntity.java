@@ -1,6 +1,6 @@
 package com.delicious_cake.delicious_cake_app.entities;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import com.delicious_cake.delicious_cake_app.enums.MovementType;
 
 import jakarta.persistence.Column;
@@ -32,5 +32,5 @@ public class InventoryMovementEntity extends BaseEntity {
     private Integer quantity;
 
     @Column(nullable = false)
-    private LocalDateTime date;
+    private LocalDate date;
 }

@@ -1,17 +1,21 @@
 package com.delicious_cake.delicious_cake_app.services;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.delicious_cake.delicious_cake_app.dtos.SaleDTO;
+import com.delicious_cake.delicious_cake_app.dtos.SaleDetailDTO;
 import com.delicious_cake.delicious_cake_app.entities.CustomerEntity;
+import com.delicious_cake.delicious_cake_app.entities.ProductEntity;
 import com.delicious_cake.delicious_cake_app.entities.SaleEntity;
 import com.delicious_cake.delicious_cake_app.entities.StandEntity;
 import com.delicious_cake.delicious_cake_app.mappers.SaleMapper;
 import com.delicious_cake.delicious_cake_app.repositories.CustomerRepository;
+import com.delicious_cake.delicious_cake_app.repositories.ProductRepository;
 import com.delicious_cake.delicious_cake_app.repositories.SaleRepository;
 import com.delicious_cake.delicious_cake_app.repositories.StandRepository;
 
@@ -21,15 +25,22 @@ public class SaleService {
     private final SaleRepository saleRepository;
     private final CustomerRepository customerRepository;
     private final StandRepository standRepository;
+    private final SaleDetailService saleDetailService;
+    private final ProductRepository productRepository;
 
     public SaleService(
             SaleRepository saleRepository,
             CustomerRepository customerRepository,
-            StandRepository standRepository) {
+            StandRepository standRepository,
+            ProductRepository productRepository,
+            SaleDetailService saleDetailService) {
 
         this.saleRepository = saleRepository;
         this.customerRepository = customerRepository;
         this.standRepository = standRepository;
+        this.productRepository = productRepository;
+        this.saleDetailService = saleDetailService
+        ;
     }
 
     //Create Method finding the customer and stand by their IDs
@@ -55,11 +66,41 @@ public class SaleService {
 
         sale.setCustomer(customer);
         sale.setTable(stand);
+        sale.setCreatedAt(LocalDate.now());
 
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (SaleDetailDTO detailDTO : dto.getDetails()) {
+
+                ProductEntity product = productRepository.findById(detailDTO.getProductId())
+                                .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + detailDTO.getProductId()));
+
+                BigDecimal unitPrice = product.getPrice();
+
+                BigDecimal subtotal = unitPrice.multiply(
+                        BigDecimal.valueOf(detailDTO.getQuantity())
+                );
+
+                total = total.add(subtotal);
+        }
+
+        sale.setTotal(total);
+        
         SaleEntity savedSale = saleRepository.save(sale);
 
+        for (SaleDetailDTO detailDTO : dto.getDetails()) {
+
+                detailDTO.setSaleId(savedSale.getId());
+                saleDetailService.create(detailDTO);
+        }
+
+        savedSale.setTotal(total);
+
+        saleRepository.save(savedSale);
+
         return SaleMapper.toDTO(savedSale);
-    }
+        
+    }   
 
     //Get Method
     public SaleDTO getById(Long id) {
@@ -106,7 +147,6 @@ public class SaleService {
 
         existingSale.setCustomer(customer);
         existingSale.setTable(stand);
-        existingSale.setTotal(dto.getTotal());
 
         SaleEntity updatedSale = saleRepository.save(existingSale);
 
@@ -135,13 +175,6 @@ public class SaleService {
         if (dto.getTableId() == null) {
             throw new IllegalArgumentException(
                     "Table ID cannot be null");
-        }
-
-        if (dto.getTotal() == null ||
-                dto.getTotal().compareTo(BigDecimal.ZERO) < 0) {
-
-            throw new IllegalArgumentException(
-                    "Total cannot be null or negative");
         }
     }
 }
